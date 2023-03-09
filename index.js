@@ -1,9 +1,22 @@
 const db = require('./db/connect')
 require('console.table')
+const inquirer = require('inquirer')
+const logo = require('asciiart-logo')
 
+//loads my logo first on console 
+loadLogo();
+// function to give my logo properties.
+function loadLogo() {
+    console.log(
+        logo({
+            name: 'Company Database',
+            font: 'Speed',
+            logoColor: 'bold-blue',
+        }).render())
+}
 //load prompts
 function mainPrompts() {
-    prompt([{
+    inquirer.prompt([{
         type: "list",
         name: "choice",
         message: "What would you like to do?",
@@ -85,7 +98,7 @@ function viewDepartments() {
 }
 // Add department choice in mainPrompts()
 function addDepartment() {
-    prompt([
+    inquirer.prompt([
         {
             name: 'dept_name',
             message: 'What is the new department?',
@@ -106,50 +119,8 @@ function viewEmployees() {
     });
 }
 // Add employee choice in mainPrompts()
-// function addEmployee() {
-//     db.promise().query('SELECT * FROM employees')
-//         .then(([data]) => {
-//             const manChoices = data.map(({ id, name }) => ({
-//                 name: name,
-//                 value: id
-//             }));
-//             const roleChoices = data.map(({ id, title }) => ({
-//                 name: title,
-//                 value: id
-//             }));
-//             prompt([
-//                 {
-//                     name: 'first_name',
-//                     message: 'What is the new employees first name?',
-//                     type: 'input'
-//                 },
-//                 {
-//                     name: 'last_name',
-//                     message: 'What is the new employees last name?',
-//                     type: 'input'
-//                 },
-//                 {
-//                     name: 'role_title',
-//                     message: 'What is the new employees role?',
-//                     type: 'list',
-//                     choices: roleChoices
-//                 },
-//                 {
-//                     name: 'manager_id',
-//                     message: "What is the new employees Manager name?",
-//                     type: 'list',
-//                     choices: manChoices
-//                 }
-//             ]).then(res => {
-//                 db.query('REPLACE employee (first_name, last_name, role_title, manager_id) values (?, ?, ?, ?)', [res.first_name, res.last_name, res.role, res.manager_id], function (err, data) {
-//                     console.log('Employee added successfully!')
-//                     mainPrompts()
-//                 });
-//             });
-//         });
-// }
 function addEmployee() {
-    prompt([
+    inquirer.prompt([
         {
             name: 'first_name',
             message: 'What is the new employees first name?',
@@ -161,6 +132,7 @@ function addEmployee() {
             type: 'input'
         }
     ]).then(res => {
+        // need to declare variable = res. so res is not undefined?
         db.promise().query('SELECT * FROM role')
             .then(([data]) => {
                 const roleChoices = data.map(({ id, title }) =>
@@ -168,7 +140,7 @@ function addEmployee() {
                     name: title,
                     value: id
                 }));
-                prompt([
+                inquirer.prompt([
                     {
                         name: 'role_title',
                         message: 'What is the new employees role?',
@@ -176,17 +148,18 @@ function addEmployee() {
                         choices: roleChoices
                     }
                 ]).then(res => {
-                    db.promise().query('SELECT * FROM employees')
+                    // need to declare variable = res. so res is not undefined?
+                    db.promise().query('SELECT * FROM employee WHERE manager_id IS NULL')
                         .then(([data]) => {
-                            const manChoices = data.map(({ first_name, last_name, manager_id }) =>
+                            const manChoices = data.map(({ first_name, last_name, id }) =>
                             ({
                                 name: `${first_name} ${last_name}`,
-                                value: manager_id
+                                value: id
                             }));
-
+                            // Give the user the option to not select a manager
                             manChoices.push({ name: "None", value: null });
-                            
-                            prompt([
+
+                            inquirer.prompt([
                                 {
                                     name: 'manager_id',
                                     message: "What is the new employees Manager name?",
@@ -206,34 +179,66 @@ function addEmployee() {
 }
 
 // Update employee choice in mainPrompts()
-// function updateEmployee() {
-//     prompt([
-//         {
-//             name: 'employee',
-//             message: "Choose which employee's role you would like to update?",
-//             type: 'list',
-//             choices:
-//         },
-//         {
-//             name: 'role_id',
-//             message: 'Choose which role you would like to assign to the employee?',
-//             type: 'list',
-//             choices:
-//         }
-//         {
-//             name: 'manager_id',
-//             message: 'Choose which manager you would like to update?',
-//             type: 'list',
-//             choices:
-//         }
-//     ]).then(res => {
-//         db.promise().query('UPDATE employees (employee, role_id, manager_id) values (?, ?, ?)', [res.employee, res.role_id, res.manager_id], function(err, data){
-//             console.log(data)('Employee update successful!')
-//mainPrompts()
-//         })
-//     })
-// }
-// View all roles choice in mainPrompts()
+function updateEmployee() {
+    db.promise().query('SELECT * FROM employee')
+        .then(([data]) => {
+            const empChoices = data.map(({ first_name, last_name, id }) =>
+            ({
+                name: `${first_name} ${last_name}`,
+                value: id
+            }));
+            inquirer.prompt([
+                {
+                    name: 'employee',
+                    message: "Choose which employee's role you would like to update?",
+                    type: 'list',
+                    choices: empChoices
+                }
+            ]).then(res => {
+                db.promise().query('SELECT * FROM role')
+                    .then(([data]) => {
+                        const roleChoices = data.map(({ id, title }) =>
+                        ({
+                            name: title,
+                            value: id
+                        }));
+                        inquirer.prompt([{
+                            name: 'role_id',
+                            message: 'Choose which role you would like to assign to the employee?',
+                            type: 'list',
+                            choices: roleChoices
+                        }
+                        ]).then(res => {
+                            db.promise().query('SELECT * FROM employee WHERE manager_id IS NULL')
+                            .then(([data]) => {
+                            const manChoices = data.map(({ first_name, last_name, id }) =>
+                            ({
+                                name: `${first_name} ${last_name}`,
+                                value: id
+                            }));
+                            // Give the user the option to not select a manager
+                            manChoices.push({ name: "None", value: null });
+
+                            inquirer.prompt([
+                                {
+                                    name: 'manager_id',
+                                    message: 'Choose which manager you would like to update?',
+                                    type: 'list',
+                                    choices: manChoices
+                                }
+                            ]).then(res => {
+                                db.query('UPDATE employee (employee, role_id, manager_id) values (?, ?, ?)', [res.employee, res.role_id, res.manager_id], function (err, data) {
+                                    console.log('Employee update successful!')
+                                    mainPrompts()
+                                })
+                            })
+                        })
+                    })
+                })
+            })
+        })
+}
+// View all roles in mainPrompts()
 function viewRole() {
     db.query('SELECT * FROM roles', function (err, data) {
         console.table(data)
@@ -248,7 +253,7 @@ function addRole() {
                 name: name,
                 value: id
             }));
-            prompt([
+            inquirer.prompt([
                 {
                     name: 'role_title',
                     message: 'What is the name of the new role?',
@@ -272,22 +277,9 @@ function addRole() {
                 })
             })
         })
-}
+};
 // Exit the app at quit() in mainPrompts()
 function quit() {
-    console.log("Exiting Company Database!");
+    console.log("Exiting Company Database!")
     process.exit();
 }
-
-// ---------------------------------------------------------
-// choices:
-            // view departments - //dept. name and dept. ID
-// Add department - //enter name of department
-
-            // view employees - //employee ids, first names, last names, job titles, departments, salaries, and managers that the employees report to
-// Add Employee - enter first, last name, role and manager
-// Update Employee role - //select an employee to update and their new role(separate questions)
-
-            // view role - //view all departments, view all roles, view all employees, add a department, add a role, add an employee, and update an employee role
-// Add role - //role name, salary, dept. for the role
-
