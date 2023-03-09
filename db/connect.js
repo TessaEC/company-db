@@ -1,9 +1,9 @@
 const mysql = require("mysql2");
-
+require('dotenv').config()
 const connectDB = mysql.createConnection({
   host: "localhost",
   user: "root",
-  password: "tCarlson90",
+  password: process.env.DB_PW,
   database: "employees"
 },
 console.log('Connected to Company Database.')
