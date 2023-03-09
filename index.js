@@ -1,7 +1,7 @@
-const db = require('./db/connect')
-require('console.table')
-const inquirer = require('inquirer')
-const logo = require('asciiart-logo')
+const db = require('./db/connect');
+require('console.table');
+const inquirer = require('inquirer');
+const logo = require('asciiart-logo');
 
 //loads my logo first on console 
 loadLogo();
@@ -92,10 +92,11 @@ function mainPrompts() {
 }
 // View all departments choice in mainPrompts()
 function viewDepartments() {
-    db.query('SELECT * FROM departments', function (err, data) {
-        console.table(data)
-        mainPrompts()
-    })
+    db.promise().query('SELECT * FROM department')
+        .then(([rows]) => {
+            let departments = rows;
+            console.table(departments);
+        }).then(() => mainPrompts());
 }
 // Add department choice in mainPrompts()
 function addDepartment() {
@@ -106,18 +107,25 @@ function addDepartment() {
             type: 'input'
         }
     ]).then(res => {
-        db.query('INSERT INTO departments (dept_name) values (?)', [res.dept_name], function (err, data) {
-            console.log('Department added successfully!')
-            mainPrompts()
+        db.promise().query('INSERT INTO department (dept_name) values (?)', [res.dept_name])
+            .then(data => {
+                console.log('Department added successfully!')
+            }).then(data => {
+                db.promise().query('SELECT * FROM department')
+                .then(([rows]) => {
+                    let departments = rows;
+                    console.table(departments);
+            }).then(() => mainPrompts());
         })
     })
 }
 // View all employees choice in mainPrompts()
 function viewEmployees() {
-    db.query('SELECT * FROM employees', function (err, data) {
-        console.table(data)
-        mainPrompts()
-    });
+    db.promise().query('SELECT * FROM employee')
+        .then(([rows]) => {
+            let departments = rows;
+            console.table(departments);
+        }).then(() => mainPrompts());
 }
 // Add employee choice in mainPrompts()
 function addEmployee() {
@@ -133,17 +141,15 @@ function addEmployee() {
             type: 'input'
         }
     ]).then(res => {
-        // need to declare variable = res. so res is not undefined?
         db.promise().query('SELECT * FROM role')
             .then(([data]) => {
-                const roleChoices = data.map(({ id, title }) =>
+                const roleChoices = data.map(({ role_title }) =>
                 ({
-                    name: title,
-                    value: id
+                    name: role_title
                 }));
                 inquirer.prompt([
                     {
-                        name: 'role_title',
+                        name: 'role_id',
                         message: 'What is the new employees role?',
                         type: 'list',
                         choices: roleChoices
@@ -152,10 +158,10 @@ function addEmployee() {
                     // need to declare variable = res. so res is not undefined?
                     db.promise().query('SELECT * FROM employee WHERE manager_id IS NULL')
                         .then(([data]) => {
-                            const manChoices = data.map(({ first_name, last_name, id }) =>
+                            const manChoices = data.map(({ first_name, last_name, manager_id }) =>
                             ({
                                 name: `${first_name} ${last_name}`,
-                                value: id
+                                value: manager_id
                             }));
                             // Give the user the option to not select a manager
                             manChoices.push({ name: "None", value: null });
@@ -168,16 +174,22 @@ function addEmployee() {
                                     choices: manChoices
                                 }
                             ]).then(res => {
-                                db.query('UPDATE employee (first_name, last_name, role_title, manager_id) values (?, ?, ?, ?)', [res.first_name, res.last_name, res.role, res.manager_id], function (err, data) {
-                                    console.log('Employee added successfully!')
-                                    mainPrompts()
-                                });
-                            });
-                        });
+                                db.promise().query('INSERT INTO employee (first_name, last_name, role_id, manager_id) values (?, ?, ?, ?)', [res.first_name, res.last_name, res.role_id, res.manager_id])
+                                    .then(data => {
+                                        console.log('Employee added successfully!')
+                                }).then(data => {
+                                    db.promise().query('SELECT * FROM employee')
+                                    .then(([rows]) => {
+                                        let employees = rows;
+                                        console.table(employees);
+                                }).then(() => mainPrompts());
+                            })
+                        })
+                    });
                 });
             });
-    });
-}
+        });
+    }
 
 // Update employee choice in mainPrompts()
 function updateEmployee() {
@@ -241,14 +253,15 @@ function updateEmployee() {
 }
 // View all roles in mainPrompts()
 function viewRole() {
-    db.query('SELECT * FROM roles', function (err, data) {
-        console.table(data)
-        mainPrompts()
-    })
+    db.promise().query('SELECT * FROM role')
+        .then(([rows]) => {
+            let departments = rows;
+            console.table(departments);
+        }).then(() => mainPrompts());
 }
 // Add role choice in mainPrompts()
 function addRole() {
-    db.promise().query('SELECT * FROM departments')
+    db.promise().query('SELECT * FROM department')
         .then(([data]) => {
             const deptChoices = data.map(({ id, name }) => ({
                 name: name,
