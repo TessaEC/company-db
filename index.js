@@ -13,6 +13,7 @@ function loadLogo() {
             font: 'Speed',
             logoColor: 'bold-blue',
         }).render())
+    mainPrompts();
 }
 //load prompts
 function mainPrompts() {
