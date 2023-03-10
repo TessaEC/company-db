@@ -5,7 +5,7 @@ const logo = require('asciiart-logo');
 
 //loads my logo first on console 
 loadLogo();
-// function to give my logo properties.
+// function to run my logo and set properties.
 function loadLogo() {
     console.log(
         logo({
@@ -15,7 +15,7 @@ function loadLogo() {
         }).render())
     mainPrompts();
 }
-//load prompts
+//load prompts for main menu
 function mainPrompts() {
     inquirer.prompt([{
         type: "list",
@@ -57,36 +57,28 @@ function mainPrompts() {
         ]
     }]).then(res => {
         if (res.choice === "VIEW_DEPARTMENTS") {
-            // call view department function here
-            viewDepartments();
+        viewDepartments();
         }
         if (res.choice === "ADD_DEPARTMENT") {
-            // call add department function here
-            addDepartment();
+        addDepartment();
         }
         if (res.choice === "VIEW_EMPLOYEES") {
-            // call view employee function here
-            viewEmployees();
+        viewEmployees();
         }
         if (res.choice === "ADD_EMPLOYEE") {
-            // call add employee function here
-            addEmployee();
-        }
-        if (res.choice === "UPDATE_EMPLOYEE") {
-            // call update employee function here
-            updateEmployee();
+        addEmployee();
         }
         if (res.choice === "VIEW_ROLES") {
-            // call view role function here
-            viewRole();
+        viewRole();
         }
         if (res.choice === "ADD_ROLE") {
-            // call add role function here
-            addRole();
+        addRole();
+        }
+        if (res.choice === "UPDATE_EMPLOYEE") {
+            updateEmployee();
         }
         if (res.choice === "QUIT") {
-            // call quit function here
-            quit();
+        quit();
         }
     })
 }
@@ -277,17 +269,17 @@ function addRole() {
                 }
             ]).then(res => {
                 db.promise().query('INSERT INTO role (role_title, salary, dept_id) values (?, ?, ?)', [res.role_title, res.salary, res.dept_id])
-                .then(data => {
-                    console.log('Role added successfully!')
-                }).then(data => {
-                    db.promise().query('SELECT * FROM role')
-                        .then(([rows]) => {
-                            let roles = rows;
-                            console.table(roles);
-                        }).then(() => mainPrompts());
-                })
+                    .then(data => {
+                        console.log('Role added successfully!')
+                    }).then(data => {
+                        db.promise().query('SELECT * FROM role')
+                            .then(([rows]) => {
+                                let roles = rows;
+                                console.table(roles);
+                            }).then(() => mainPrompts());
+                    })
+            })
         })
-    })
 }
 // Exit the app at quit() in mainPrompts()
 function quit() {
